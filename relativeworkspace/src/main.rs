@@ -61,46 +61,31 @@ fn dispatch(identifier: i32) -> Result<(), HyprError> {
     };
 
     match (is_first, identifier) {
-        // If the workspace is the first, we never go previous.
-        (true, 1) => {
+        // We can only go to a previous workspace if we are not on the first one.
+        (false, -1) => {
+            // We know there is only one workspace, so we can go to the previous empty one.
+            if !multiple_workspaces {
+                relative_monitor_including_empty(-1)
+            // We know there is a previous workspace, so we can go to it.
+            } else if !is_min {
+                relative_monitor(-1)
+            // Otherwise, we know we are on the lowest workspace, so we can go to a previous empty one.
+            } else {
+                relative_monitor_including_empty(-1)
+            }
+        }
+        // We can always go to the next workspace.
+        (_, 1) => {
             // We are on the only workspace, so we can go to the next empty one.
             if !multiple_workspaces {
                 relative_monitor_including_empty(1)
-            // There's another workspace to jump to.
-            } else {
-                relative_monitor(1)
-            }
-        }
-        // We can go back to the previous workspace if we are not on the first one.
-        (false, -1) => {
-            // We are only the only workspace workspace and it is not the first,
-            // so we can go to the previous empty one.
-            if !multiple_workspaces {
-                relative_monitor_including_empty(-1)
-            // We jump to the previous workspace because we know there are multiple
-            // workspaces and we are not on the first one.
-            } else if !is_min {
-                relative_monitor(-1)
-            // Otherwise, we are still not on the first workspace, but there
-            // are no previous workspaces to jump to, so we jump to the previous empty one.
-            } else {
-                relative_monitor_including_empty(-1)
-            }
-        }
-        // We can also go to the next workspace if we are not on the last one.
-        (false, 1) => {
-            // We know there is no other workspaces, so we can go to the next empty one.
-            if !multiple_workspaces {
-                relative_monitor_including_empty(1)
-            // If there are multiple workspaces and we are not on the last one,
-            // we can jump to the next open workspace.
+            // There is a next workspace, so we can go to it.
             } else if !is_max {
                 relative_monitor(1)
             // We only want to go to the next empty workspace if we are already on an empty one.
             } else if is_empty {
                 relative_monitor_including_empty(1)
-            // Otherwise, we know there are multiple workspaces and we are on a non-empty one,
-            // so we don't want to make any changes.
+            // Otherwise, because we know we are on the last open workspace of multiple, we don't do anything.
             } else {
                 Ok(())
             }
